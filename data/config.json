@@ -4,5 +4,5 @@
   "corte": "Acta No. 009 PMU Departamental · sismo del 10/08/2026",
   "fuente": "Registro Unifamiliar de Emergencias (RUFE) — consolidado departamental",
   "reparto_cabecera": 0.8,
-  "nota_metodologica": "El RUFE se reporta agregado por municipio. Para el mapa de calor, el conteo de cada municipio se distribuye entre sus centros poblados: 80% en la cabecera municipal y 20% repartido en partes iguales entre los demás centros poblados. Cuando el municipio solo tiene cabecera cartografiada, recibe el 100%. La distribución interna es un supuesto de representación, no un dato observado."
+  "nota_metodologica": "El RUFE se reporta agregado por municipio, sin ubicacion intramunicipal. Para dibujar el mapa de calor, el conteo de cada municipio se reparte entre sus centros poblados segun el supuesto que elijas en 'Ambito de la afectacion': todo el peso en la cabecera, o 80% en la cabecera y 20% repartido entre los demas centros poblados. Los municipios que solo tienen cabecera cartografiada reciben el 100% ahi en ambos casos. El total por municipio no cambia con el supuesto: lo unico que cambia es como se distribuye la mancha. La distribucion interna es un supuesto de representacion, no un dato observado."
 }

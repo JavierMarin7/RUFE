@@ -1,11 +1,11 @@
 {
   "proyecto": "Tablero de afectación por sismo · Registros RUFE · Valle del Cauca",
-  "version": "V0.4",
+  "version": "V0.6",
   "fecha_paquete": "2026-09-09",
   "corte_datos": "Acta No. 009 PMU Departamental · sismo del 10/08/2026",
   "decisiones_aprobadas": [
     "Representación: mapa de calor tipo KDE sobre centros poblados",
-    "Reparto del conteo municipal: 80% cabecera / 20% resto de centros poblados",
+    "Reparto del conteo municipal conmutable en el tablero: 80% cabecera / 20% resto, o 100% cabecera",
     "Actualización de datos: reemplazo del CSV en la carpeta data + arrastre de archivo al tablero",
     "Cali y Buenaventura: interruptor para incluirlos o excluirlos",
     "Escala de color: el usuario elige entre fija (42 municipios) y recalculada sobre lo visible"
@@ -65,6 +65,14 @@
     {
       "version": "V0.4",
       "detalle": "Corrige Calima – El Darién, que tenía ARO 'SIN_ASIGNAR' en el CSV y quedaba filtrada fuera del mapa y de los totales (faltaban 1.418 registros). El tablero ahora ignora valores de ARO desconocidos en vez de excluir el municipio, y el validador los reporta. Selector de fondo y capas pasa a un botón sobre el mapa, con interruptores de calor, centros poblados y límites. Nuevo botón para limpiar la selección. Secciones plegables: detalle por municipio y nota metodológica arrancan cerradas. KPI rediseñados y municipios mostrados como 'X de 42'. Los interruptores responden al hacer clic en su texto."
+    },
+    {
+      "version": "V0.5",
+      "detalle": "Selector de ámbito (total / cabecera urbana / rural) que se alimenta de las columnas opcionales registros_urbano y registros_rural. Mientras no haya esa desagregación el selector queda inactivo y explica qué falta. En modo urbano el peso va a las cabeceras y en rural a los demás centros poblados; el CSV y el PNG exportados indican el ámbito activo. El validador reporta el estado de la desagregación y los descuadres contra el total."
+    },
+    {
+      "version": "V0.6",
+      "detalle": "El selector de ámbito pasa a controlar el supuesto de reparto del mapa de calor: 80/20 cabecera-rural o 100% cabecera. Los totales por municipio no cambian entre opciones, solo la distribución de la mancha. Se retiran las columnas urbano/rural y el mensaje asociado."
     }
   ]
 }

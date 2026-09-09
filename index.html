@@ -114,7 +114,8 @@ body{
   border:1px solid var(--line);background:transparent;color:var(--muted);
   border-radius:20px;padding:4px 12px;font:inherit;font-size:12px;cursor:pointer;
 }
-.chip:hover{border-color:var(--muted)}
+.chip:hover:not([disabled]){border-color:var(--muted)}
+.chip[disabled]{opacity:.38;cursor:not-allowed}
 .chip[aria-pressed="true"]{background:var(--paper);color:var(--ink);border-color:var(--paper)}
 .chip:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--cool);outline-offset:2px}
 .row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:11px}
@@ -228,6 +229,14 @@ tbody tr:hover{background:var(--ink2)}
     </div>
 
     <div class="sec">
+      <h2>Ámbito de la afectación</h2>
+      <div class="chips" id="ambitoChips">
+        <button class="chip" data-m="mixto" aria-pressed="true">80% cabecera / 20% rural</button>
+        <button class="chip" data-m="cabecera" aria-pressed="false">100% cabecera</button>
+      </div>
+    </div>
+
+    <div class="sec">
       <h2>Área de respuesta operativa</h2>
       <div class="chips" id="aroChips"></div>
       <label class="row" for="swBig">
@@ -302,7 +311,7 @@ const FONDOS = {
 };
 
 const S = {cfg:null, muni:null, puntos:[], datos:new Map(), aros:new Set(["NORTE","CENTRO","SUR"]),
-           incluirGrandes:true, escalaFija:true, orden:{k:"registros",asc:false}, filtro:"", sel:null};
+           incluirGrandes:true, escalaFija:true, orden:{k:"registros",asc:false}, filtro:"", sel:null, modo:"mixto"};
 
 const $ = s => document.querySelector(s);
 const nf = n => n.toLocaleString("es-CO");
@@ -385,12 +394,16 @@ function leerCSV(txt){
   const cab = lineas[0].split(sep).map(c=>norm(c.replace(/"/g,"")));
   const idx = {code:cab.findIndex(c=>/DIVIPOLA|CODIGO/.test(c)),
                nom:cab.findIndex(c=>/MUNICIPIO/.test(c)),
-               aro:cab.findIndex(c=>/ARO/.test(c)),
-               val:cab.findIndex(c=>/RUFE|REGISTRO|FAMILIA|CANTIDAD/.test(c))};
+               aro:cab.findIndex(c=>/^ARO/.test(c)),
+               urb:cab.findIndex(c=>/URBANO|CABECERA/.test(c)),
+               rur:cab.findIndex(c=>/RURAL|DISPERS/.test(c)),
+               val:cab.findIndex(c=>/^(REGISTROS_RUFE|TOTAL)/.test(c))};
+  if(idx.val===-1) idx.val = cab.findIndex((c,i)=>i!==idx.urb && i!==idx.rur && /RUFE|REGISTRO|FAMILIA|CANTIDAD/.test(c));
   const filas = lineas.slice(1).map(l=>l.split(sep).map(c=>c.replace(/^"|"$/g,"").trim()));
   return cargarFilas(filas.map(f=>({
     code: idx.code>-1?f[idx.code]:"", nom: idx.nom>-1?f[idx.nom]:"",
-    aro: idx.aro>-1?f[idx.aro]:"", val: f[idx.val]
+    aro: idx.aro>-1?f[idx.aro]:"", val: f[idx.val],
+    urb: idx.urb>-1?f[idx.urb]:"", rur: idx.rur>-1?f[idx.rur]:""
   })));
 }
 
@@ -407,7 +420,9 @@ function cargarFilas(filas){
       code = porNombre.get(n) || porNombre.get(alias[n]||"") || null;
     }
     if(!code){ if(r.nom) huerfanos.push(r.nom); continue; }
-    nuevo.set(code,{registros:v, aro:(r.aro||"").toUpperCase()||null});
+    const num = x => { const s=String(x??"").trim(); if(!s) return null;
+      const n=Number(s.replace(/[^\d.-]/g,"")); return isFinite(n)?n:null; };
+    nuevo.set(code,{registros:v, urbano:num(r.urb), rural:num(r.rur), aro:(r.aro||"").toUpperCase()||null});
   }
   if(!nuevo.size){ estado("El archivo no tiene municipios reconocibles. Debe traer una columna de municipio (o código DIVIPOLA) y una de registros.",true); return false; }
   S.datos = nuevo;
@@ -426,16 +441,22 @@ function cargarFilas(filas){
 }
 
 /* ---------------- cálculo ---------------- */
+function valorDe(d){ return d ? d.registros : null; }
+function actualizarAmbito(){
+  $("#ambitoChips").querySelectorAll(".chip").forEach(b=>
+    b.setAttribute("aria-pressed", String(b.dataset.m===S.modo)));
+}
 function visibles(){
   return S.muni.features.filter(f=>{
     const p=f.properties;
     if(!S.datos.has(p.code)) return false;
+    if(valorDe(S.datos.get(p.code))==null) return false;
     if(AROS.indexOf(p.aro)>-1 && !S.aros.has(p.aro)) return false;
     if(!S.incluirGrandes && GRANDES.includes(p.code)) return false;
     return true;
   }).map(f=>({code:f.properties.code, municipio:f.properties.name, aro:f.properties.aro,
-              area:f.properties.area_km2, registros:S.datos.get(f.properties.code).registros,
-              dens:S.datos.get(f.properties.code).registros/f.properties.area_km2*100}));
+              area:f.properties.area_km2, registros:valorDe(S.datos.get(f.properties.code)),
+              dens:valorDe(S.datos.get(f.properties.code))/f.properties.area_km2*100}));
 }
 
 function puntosPonderados(lista, maxRef){
@@ -451,9 +472,12 @@ function puntosPonderados(lista, maxRef){
     const resto = pts.filter(p=>!p.cm), cab = pts.filter(p=>p.cm);
     for(const p of pts){
       let share;
-      if(!resto.length) share = 1/pts.length;
+      if(S.modo==="cabecera"){
+        share = p.cm ? 1/Math.max(cab.length,1) : 0;
+      } else if(!resto.length) share = 1/pts.length;
       else if(p.cm) share = w/Math.max(cab.length,1);
       else share = (1-w)/resto.length;
+      if(share === 0) continue;
       feats.push({type:"Feature",
         properties:{peso: Math.pow(Math.min(1,(m.registros*share)/maxRef), 0.55)},
         geometry:{type:"Point",coordinates:[p.lon,p.lat]}});
@@ -464,17 +488,20 @@ function puntosPonderados(lista, maxRef){
 
 function refrescar(){
   if(!S.cfg || !S.muni || !S.datos.size) return;
+  actualizarAmbito();
   const lista = visibles();
   const w = S.cfg.reparto_cabecera ?? 0.8;
   // referencia: mayor peso puntual posible, según modo de escala
   const base = S.escalaFija
-    ? S.muni.features.filter(f=>S.datos.has(f.properties.code))
-        .map(f=>({code:f.properties.code, registros:S.datos.get(f.properties.code).registros}))
+    ? S.muni.features.filter(f=>S.datos.has(f.properties.code) && valorDe(S.datos.get(f.properties.code))!=null)
+        .map(f=>({code:f.properties.code, registros:valorDe(S.datos.get(f.properties.code))}))
     : lista;
   const maxRef = Math.max(1, ...base.map(m=>{
     const pts = S.puntos.filter(p=>p.code===m.code);
-    const solos = pts.filter(p=>!p.cm).length===0;
-    return m.registros * (solos ? 1/Math.max(pts.length,1) : w);
+    const resto = pts.filter(p=>!p.cm).length, cab = Math.max(pts.filter(p=>p.cm).length,1);
+    const sh = S.modo==="cabecera" ? 1/cab
+             : (resto ? w : 1/Math.max(pts.length,1));
+    return m.registros * sh;
   }));
 
   if(map.getSource("calor")) map.getSource("calor").setData(puntosPonderados(lista,maxRef));
@@ -489,10 +516,9 @@ function refrescar(){
   $("#legmode").textContent = S.escalaFija
     ? "Escala fija: comparable entre vistas."
     : "Escala recalculada sobre lo visible ahora.";
-  const g = S.muni.features.filter(f=>GRANDES.includes(f.properties.code) && S.datos.has(f.properties.code))
-    .reduce((a,f)=>a+S.datos.get(f.properties.code).registros,0);
-  const tot = S.muni.features.filter(f=>S.datos.has(f.properties.code))
-    .reduce((a,f)=>a+S.datos.get(f.properties.code).registros,0);
+  const suma = fs => fs.reduce((a,f)=>a+(valorDe(S.datos.get(f.properties.code))||0),0);
+  const g = suma(S.muni.features.filter(f=>GRANDES.includes(f.properties.code) && S.datos.has(f.properties.code)));
+  const tot = suma(S.muni.features.filter(f=>S.datos.has(f.properties.code)));
   $("#hintBig").textContent = !tot ? ""
     : S.incluirGrandes
       ? "Incluidos: aportan "+nf(g)+" registros, el "+(g/tot*100).toFixed(1)+"% del total."
@@ -591,6 +617,14 @@ function chipsARO(){
   });
 }
 chipsARO();
+
+$("#ambitoChips").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{
+  if(b.disabled) return;
+  S.modo=b.dataset.m; S.sel=null;
+  map.setFilter("muni-sel",["==","code",""]);
+  $("#btnLimpiar").hidden=true;
+  refrescar();
+});
 
 $("#swBig").onchange = e => { S.incluirGrandes=e.target.checked; refrescar(); };
 $("#swEscala").onchange = e => { S.escalaFija=e.target.checked; refrescar(); };
@@ -746,9 +780,12 @@ function desdeLibro(wb,nombre){
       if(cM>-1 && cV>-1){
         const cC=fila.findIndex(c=>/DIVIPOLA|CODIGO/.test(c));
         const cA=fila.findIndex(c=>/^ARO/.test(c));
+        const cU=fila.findIndex(c=>/URBANO|CABECERA/.test(c));
+        const cR=fila.findIndex(c=>/RURAL|DISPERS/.test(c));
         const filas=m.slice(i+1)
           .filter(f=>f[cM] && !/TOTAL/.test(norm(f[cM])))
-          .map(f=>({nom:f[cM], val:f[cV], code:cC>-1?f[cC]:"", aro:cA>-1?f[cA]:""}));
+          .map(f=>({nom:f[cM], val:f[cV], code:cC>-1?f[cC]:"", aro:cA>-1?f[cA]:"",
+                    urb:cU>-1?f[cU]:"", rur:cR>-1?f[cR]:""}));
         if(filas.length) return cargarFilas(filas);
       }
     }
@@ -764,8 +801,9 @@ function bajar(blob,nombre){
 }
 $("#btnCsv").onclick = ()=>{
   const l=[...visibles()].sort((a,b)=>b.registros-a.registros);
-  const head="codigo_divipola,municipio,aro,registros_rufe,registros_por_100km2\n";
-  const body=l.map(m=>[m.code,`"${m.municipio}"`,m.aro,m.registros,m.dens.toFixed(2)].join(",")).join("\n");
+  const amb = S.modo==="cabecera" ? "100_cabecera" : "80_20_cabecera_rural";
+  const head="codigo_divipola,municipio,aro,reparto,registros_rufe,registros_por_100km2\n";
+  const body=l.map(m=>[m.code,`"${m.municipio}"`,m.aro,amb,m.registros,m.dens.toFixed(2)].join(",")).join("\n");
   bajar(new Blob(["\uFEFF"+head+body+"\n"],{type:"text/csv;charset=utf-8"}),"RUFE_seleccion.csv");
   estado("CSV descargado con "+l.length+" municipios.");
 };
@@ -780,7 +818,8 @@ $("#btnPng").onclick = ()=>{
     g.fillStyle="#eef2f4"; g.font=`600 ${15*k}px "IBM Plex Sans",sans-serif`;
     g.fillText(S.cfg.titulo+" · "+S.cfg.subtitulo, pad*k, 24*k);
     g.fillStyle="#93a9b8"; g.font=`${11*k}px "IBM Plex Sans",sans-serif`;
-    g.fillText("Corte: "+S.cfg.corte+"  ·  Distribución 80/20 cabecera–rural, representación estimada", pad*k, 42*k);
+    const amb = S.modo==="cabecera" ? "Reparto: 100% en cabecera" : "Reparto: 80% cabecera / 20% rural";
+    g.fillText("Corte: "+S.cfg.corte+"  ·  "+amb+"  ·  representación estimada sobre centros poblados", pad*k, 42*k);
     c.toBlob(b=>{ bajar(b,"mapa_calor_RUFE.png"); estado("Imagen descargada."); });
   });
   map.triggerRepaint();

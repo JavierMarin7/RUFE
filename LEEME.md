@@ -25,7 +25,7 @@ descargan en línea.
 Hay dos caminos y los dos funcionan:
 
 **Permanente.** Edita `data/datos_rufe.csv` en Excel y guárdalo como CSV UTF-8.
-Las columnas son `codigo_divipola`, `municipio`, `aro`, `registros_rufe`. Refresca el
+Las columnas son `codigo_divipola`, `municipio`, `aro` y `registros_rufe`. Refresca el
 navegador y el tablero queda actualizado para todos los que usen esa carpeta.
 
 **De una sola vez.** Arrastra un `.xlsx` o `.csv` sobre el tablero, o usa el botón
@@ -35,12 +35,25 @@ que el consolidado RUFE original funciona tal como sale.
 
 Cambia la fecha de corte, el título y la nota metodológica en `data/config.json`.
 
+## Ámbito de la afectación
+
+Dos supuestos de reparto, conmutables desde el panel:
+
+- **80% cabecera / 20% rural** — la cabecera concentra el grueso y queda un halo sobre
+  los demás centros poblados. Es el que viene por defecto.
+- **100% cabecera** — todo el peso en el casco urbano. Manchas más nítidas y ningún
+  supuesto sobre distribución rural.
+
+El total de cada municipio no cambia con el supuesto: lo único que cambia es cómo se
+distribuye la mancha en el mapa. Los cinco municipios que solo tienen la cabecera
+cartografiada —Alcalá, Calima, Restrepo, Vijes y Yotoco— se ven igual en ambos.
+
+El CSV y el PNG que exportes dejan constancia del supuesto que estaba activo.
+
 ## Cómo se construye el mapa de calor
 
 El RUFE se reporta agregado por municipio, sin ubicación intramunicipal. Para el mapa,
-el conteo de cada municipio se reparte entre sus centros poblados: **80% en la cabecera
-y 20% entre los demás**, en partes iguales. Los municipios que solo tienen cabecera
-cartografiada reciben el 100% ahí.
+el conteo se reparte entre los centros poblados según el supuesto que elijas arriba.
 
 Ese reparto es un supuesto de representación, no un dato. La nota está impresa en el
 panel y en la imagen exportada para que viaje con el mapa.
