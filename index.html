@@ -20,7 +20,7 @@ body{
   font-size:14px; line-height:1.45; overflow:hidden;
   font-variant-numeric:tabular-nums;
 }
-#app{display:grid;grid-template-columns:1fr var(--panel-w);height:100vh}
+#app{display:grid;grid-template-columns:var(--panel-w) 1fr;height:100vh}
 /* ---------- mapa ---------- */
 #mapwrap{position:relative;background:#0b1720}
 #map{position:absolute;inset:0}
@@ -34,7 +34,7 @@ body{
 #banner h1{margin:0;font-size:17px;font-weight:600;letter-spacing:-.01em}
 #banner p{margin:2px 0 0;font-size:12px;color:var(--muted)}
 #legend{
-  position:absolute;left:18px;bottom:30px;z-index:5;
+  position:absolute;right:18px;bottom:30px;z-index:5;
   background:rgba(15,31,43,.88);border:1px solid var(--line);border-radius:6px;
   padding:10px 12px;backdrop-filter:blur(6px);width:210px;
 }
@@ -62,7 +62,8 @@ body{
 #dropzone.on{display:flex}
 /* ---------- panel ---------- */
 #panel{
-  background:var(--ink);border-left:1px solid var(--line);
+  order:-1;
+  background:var(--ink);border-right:1px solid var(--line);
   overflow-y:auto;overflow-x:hidden;
 }
 #panel::-webkit-scrollbar{width:9px}
@@ -71,12 +72,42 @@ body{
 .sec h2{margin:0 0 10px;font-size:12px;font-weight:500;color:var(--muted)}
 /* kpi */
 .kpi-lead{display:flex;align-items:baseline;gap:9px}
-.kpi-lead .n{font-size:40px;font-weight:300;letter-spacing:-.03em;line-height:1}
+.kpi-lead .n{font-size:46px;font-weight:300;letter-spacing:-.03em;line-height:1;color:#fff}
 .kpi-lead .u{font-size:12px;color:var(--muted)}
-.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;margin-top:14px;background:var(--line)}
-.kpi{background:var(--ink);padding:9px 0 3px}
-.kpi .v{font-size:18px;font-weight:500}
-.kpi .l{font-size:11px;color:var(--muted)}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+.kpi{background:var(--ink2);border:1px solid var(--line);border-left:3px solid var(--cool);
+  border-radius:5px;padding:10px 12px}
+.kpi:nth-child(2){border-left-color:#62d3d6}
+.kpi:nth-child(3){border-left-color:var(--hot)}
+.kpi:nth-child(4){border-left-color:var(--warm)}
+.kpi .v{font-size:21px;font-weight:500;line-height:1.15;color:#fff}
+.kpi .l{font-size:11px;color:var(--muted);margin-top:3px}
+/* secciones plegables */
+.sec[data-plegable] h2{display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;user-select:none;margin-bottom:10px}
+.sec[data-plegable] h2:hover{color:#c3d2dc}
+.caret{display:inline-block;transition:transform .15s;font-size:15px;line-height:1;color:var(--muted)}
+.sec:not(.cerrado)[data-plegable] .caret{transform:rotate(90deg)}
+.sec.cerrado h2{margin-bottom:0}
+.sec.cerrado .cuerpo{display:none}
+/* controles sobre el mapa */
+#mapbtns{position:absolute;top:104px;right:10px;z-index:7;display:flex;flex-direction:column;gap:6px}
+.mapbtn{width:34px;height:34px;border-radius:6px;border:1px solid rgba(15,31,43,.25);
+  background:#fff;color:#16242e;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.28);padding:0}
+.mapbtn:hover{background:#eef2f4}
+.mapbtn[aria-expanded="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+#capasMenu{position:absolute;top:0;right:42px;width:196px;
+  background:rgba(15,31,43,.96);border:1px solid var(--line);border-radius:6px;
+  padding:10px 12px;backdrop-filter:blur(6px);box-shadow:0 4px 14px rgba(0,0,0,.3)}
+#capasMenu .grp{font-size:10.5px;color:var(--muted);margin:10px 0 5px}
+#capasMenu .grp:first-child{margin-top:0}
+.opt{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:3px 0;cursor:pointer}
+.opt input{accent-color:var(--cool);margin:0;width:14px;height:14px}
+.fondoOpt{display:block;width:100%;text-align:left;border:0;background:none;color:var(--paper);
+  font:inherit;font-size:12.5px;padding:4px 7px;border-radius:4px;cursor:pointer}
+.fondoOpt:hover{background:var(--ink3)}
+.fondoOpt[aria-pressed="true"]{background:var(--paper);color:var(--ink);font-weight:500}
 /* controles */
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{
@@ -87,7 +118,8 @@ body{
 .chip[aria-pressed="true"]{background:var(--paper);color:var(--ink);border-color:var(--paper)}
 .chip:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--cool);outline-offset:2px}
 .row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:11px}
-.row label{font-size:12.5px}
+.row{cursor:pointer}
+.row label{font-size:12.5px;cursor:pointer}
 .row .hint{font-size:11px;color:var(--muted);margin-top:2px}
 .switch{position:relative;width:38px;height:21px;flex:0 0 auto}
 .switch input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
@@ -131,11 +163,17 @@ tbody tr:hover{background:var(--ink2)}
 #corte{font-size:12px}
 #estado{font-size:11.5px;color:var(--muted);margin-top:9px;min-height:16px}
 #estado.err{color:#ffab9c}
+@media (min-width:1500px){ :root{--panel-w:470px} }
+@media (min-width:1800px){
+  :root{--panel-w:560px}
+  .kpi-grid{grid-template-columns:repeat(4,1fr)}
+  .sec{padding:18px 24px}
+}
 @media (max-width:900px){
   body{overflow:auto}
   #app{grid-template-columns:1fr;height:auto}
   #mapwrap{height:62vh;min-height:340px}
-  #panel{overflow:visible;border-left:0;border-top:1px solid var(--line)}
+  #panel{order:1;overflow:visible;border-right:0;border-top:1px solid var(--line)}
   :root{--panel-w:100%}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -156,6 +194,22 @@ tbody tr:hover{background:var(--ink2)}
       <div class="mode" id="legmode"></div>
       <div class="mode" id="atrib" style="border-top:0;padding-top:4px"></div>
     </div>
+    <div id="mapbtns">
+      <button id="capasBtn" class="mapbtn" aria-expanded="false" title="Capas del mapa" aria-label="Capas del mapa">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="M3 13l9 5 9-5"/></svg>
+      </button>
+      <button id="btnLimpiar" class="mapbtn" hidden title="Limpiar selección" aria-label="Limpiar selección">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+      <div id="capasMenu" hidden>
+        <div class="grp">Fondo cartográfico</div>
+        <div id="fondoLista"></div>
+        <div class="grp">Capas</div>
+        <label class="opt"><input type="checkbox" id="swCalor" checked> Mapa de calor</label>
+        <label class="opt"><input type="checkbox" id="swCP" checked> Centros poblados</label>
+        <label class="opt"><input type="checkbox" id="swLim" checked> Límites municipales</label>
+      </div>
+    </div>
     <div id="hover"></div>
     <div id="dropzone">Suelta el archivo para cargar los datos</div>
   </div>
@@ -165,7 +219,7 @@ tbody tr:hover{background:var(--ink2)}
       <h2>Total en la selección</h2>
       <div class="kpi-lead"><span class="n" id="kTotal">—</span><span class="u">registros RUFE</span></div>
       <div class="kpi-grid">
-        <div class="kpi"><div class="v" id="kMun">—</div><div class="l">municipios</div></div>
+        <div class="kpi"><div class="v" id="kMun">—</div><div class="l">municipios con dato</div></div>
         <div class="kpi"><div class="v" id="kProm">—</div><div class="l">promedio por municipio</div></div>
         <div class="kpi"><div class="v" id="kMax">—</div><div class="l" id="kMaxL">mayor afectación</div></div>
         <div class="kpi"><div class="v" id="kTop5">—</div><div class="l">concentra el top 5</div></div>
@@ -174,40 +228,30 @@ tbody tr:hover{background:var(--ink2)}
     </div>
 
     <div class="sec">
-      <h2>Fondo del mapa</h2>
-      <div class="chips" id="fondoChips"></div>
-      <div class="row">
-        <div><label for="swCP">Mostrar centros poblados</label>
-          <div class="hint">223 puntos. Las cabeceras se ven más grandes y muestran su nombre al acercar.</div></div>
-        <div class="switch"><input type="checkbox" id="swCP" checked><span></span></div>
-      </div>
-    </div>
-
-    <div class="sec">
       <h2>Área de respuesta operativa</h2>
       <div class="chips" id="aroChips"></div>
-      <div class="row">
-        <div><label for="swBig">Incluir Cali y Buenaventura</label>
+      <label class="row" for="swBig">
+        <div><span>Incluir Cali y Buenaventura</span>
           <div class="hint" id="hintBig"></div></div>
         <div class="switch"><input type="checkbox" id="swBig" checked><span></span></div>
-      </div>
-      <div class="row">
-        <div><label for="swEscala">Escala de color fija</label>
+      </label>
+      <label class="row" for="swEscala">
+        <div><span>Escala de color fija</span>
           <div class="hint">Fija: siempre referida a los 42 municipios. Suelta: se recalcula con lo visible.</div></div>
-        <div class="switch"><input type="checkbox" id="swEscala"><span></span></div>
-      </div>
+        <div class="switch"><input type="checkbox" id="swEscala" checked><span></span></div>
+      </label>
       <div class="row">
         <label for="rdRadio">Radio del calor</label>
         <input type="range" id="rdRadio" min="14" max="80" value="34">
       </div>
     </div>
 
-    <div class="sec">
+    <div class="sec" data-plegable>
       <h2>Ranking de municipios</h2>
       <div class="rank" id="rank"></div>
     </div>
 
-    <div class="sec">
+    <div class="sec" data-plegable data-cerrado>
       <h2>Detalle por municipio</h2>
       <input id="buscar" type="search" placeholder="Buscar municipio">
       <table>
@@ -221,7 +265,7 @@ tbody tr:hover{background:var(--ink2)}
       </table>
     </div>
 
-    <div class="sec">
+    <div class="sec" data-plegable>
       <h2>Datos</h2>
       <div class="btns">
         <button class="btn" id="btnCargar">Cargar archivo</button>
@@ -232,7 +276,7 @@ tbody tr:hover{background:var(--ink2)}
       <div id="estado"></div>
     </div>
 
-    <div class="sec">
+    <div class="sec" data-plegable data-cerrado>
       <h2>Cómo leer este mapa</h2>
       <p class="nota" id="nota"></p>
       <p class="nota" id="fuente" style="margin-bottom:0"></p>
@@ -245,6 +289,7 @@ tbody tr:hover{background:var(--ink2)}
 "use strict";
 function iniciarApp(){
 const GRANDES = ["76001","76109"]; // Cali, Buenaventura
+const AROS = ["NORTE","CENTRO","SUR"];
 const RAMPA = [
   [0.00,"rgba(58,110,168,0)"],[0.06,"rgba(58,110,168,0.45)"],[0.16,"#4a90d9"],
   [0.30,"#62d3d6"],[0.46,"#a8e05f"],[0.60,"#f7e463"],[0.78,"#f2913d"],[1.00,"#c9302c"]
@@ -257,7 +302,7 @@ const FONDOS = {
 };
 
 const S = {cfg:null, muni:null, puntos:[], datos:new Map(), aros:new Set(["NORTE","CENTRO","SUR"]),
-           incluirGrandes:true, escalaFija:false, orden:{k:"registros",asc:false}, filtro:""};
+           incluirGrandes:true, escalaFija:true, orden:{k:"registros",asc:false}, filtro:"", sel:null};
 
 const $ = s => document.querySelector(s);
 const nf = n => n.toLocaleString("es-CO");
@@ -273,7 +318,7 @@ const map = new maplibregl.Map({
     layers:[{id:"fondo",type:"background",paint:{"background-color":"#dfe6e9"}},
             {id:"base",type:"raster",source:"base"}]}
 });
-map.addControl(new maplibregl.NavigationControl({showCompass:false}),"bottom-right");
+map.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-right");
 map.addControl(new maplibregl.ScaleControl({maxWidth:110,unit:"metric"}),"bottom-left");
 
 /* ---------------- carga inicial ---------------- */
@@ -368,11 +413,13 @@ function cargarFilas(filas){
   S.datos = nuevo;
   for(const f of S.muni.features){
     const d = S.datos.get(f.properties.code);
-    if(d && d.aro) f.properties.aro = d.aro;
+    if(d && d.aro && AROS.indexOf(d.aro)>-1) f.properties.aro = d.aro;
   }
+  const aroRaras = [...new Set(filas.map(r=>(r.aro||"").toUpperCase()).filter(a=>a && AROS.indexOf(a)===-1))];
   const faltan = S.muni.features.filter(f=>!S.datos.has(f.properties.code)).length;
   let msg = nuevo.size+" municipios cargados.";
   if(faltan) msg += " "+faltan+" sin dato, se dibujan en gris.";
+  if(aroRaras.length) msg += " ARO no reconocida (se conserva la del mapa): "+aroRaras.join(", ")+".";
   if(huerfanos.length) msg += " Sin coincidencia: "+huerfanos.slice(0,4).join(", ")+(huerfanos.length>4?"…":"")+".";
   estado(msg, huerfanos.length>0);
   return true;
@@ -383,7 +430,7 @@ function visibles(){
   return S.muni.features.filter(f=>{
     const p=f.properties;
     if(!S.datos.has(p.code)) return false;
-    if(!S.aros.has(p.aro)) return false;
+    if(AROS.indexOf(p.aro)>-1 && !S.aros.has(p.aro)) return false;
     if(!S.incluirGrandes && GRANDES.includes(p.code)) return false;
     return true;
   }).map(f=>({code:f.properties.code, municipio:f.properties.name, aro:f.properties.aro,
@@ -416,6 +463,7 @@ function puntosPonderados(lista, maxRef){
 }
 
 function refrescar(){
+  if(!S.cfg || !S.muni || !S.datos.size) return;
   const lista = visibles();
   const w = S.cfg.reparto_cabecera ?? 0.8;
   // referencia: mayor peso puntual posible, según modo de escala
@@ -445,7 +493,10 @@ function refrescar(){
     .reduce((a,f)=>a+S.datos.get(f.properties.code).registros,0);
   const tot = S.muni.features.filter(f=>S.datos.has(f.properties.code))
     .reduce((a,f)=>a+S.datos.get(f.properties.code).registros,0);
-  $("#hintBig").textContent = tot ? "Concentran el "+(g/tot*100).toFixed(1)+"% del total departamental." : "";
+  $("#hintBig").textContent = !tot ? ""
+    : S.incluirGrandes
+      ? "Incluidos: aportan "+nf(g)+" registros, el "+(g/tot*100).toFixed(1)+"% del total."
+      : "Excluidos: quedan fuera del mapa y de todos los indicadores.";
 }
 
 /* ---------------- panel ---------------- */
@@ -453,7 +504,7 @@ function pintarKPIs(l){
   const tot = l.reduce((a,m)=>a+m.registros,0);
   const ord = [...l].sort((a,b)=>b.registros-a.registros);
   $("#kTotal").textContent = nf(tot);
-  $("#kMun").textContent = l.length;
+  $("#kMun").textContent = l.length + " de " + S.muni.features.length;
   $("#kProm").textContent = l.length? nf(Math.round(tot/l.length)) : "—";
   $("#kMax").textContent = ord[0]? nf(ord[0].registros) : "—";
   $("#kMaxL").textContent = ord[0]? ord[0].municipio : "mayor afectación";
@@ -491,6 +542,8 @@ function pintarTabla(l){
 
 function volarA(code){
   const f=S.muni.features.find(x=>x.properties.code===code); if(!f) return;
+  S.sel = code;
+  const b=document.getElementById("btnLimpiar"); if(b) b.hidden=false;
   let mnx=180,mny=90,mxx=-180,mxy=-90;
   const walk=c=>{ if(typeof c[0]==="number"){mnx=Math.min(mnx,c[0]);mxx=Math.max(mxx,c[0]);mny=Math.min(mny,c[1]);mxy=Math.max(mxy,c[1]);} else c.forEach(walk); };
   walk(f.geometry.coordinates);
@@ -558,14 +611,14 @@ function encuadrar(){
 }
 window.addEventListener("resize",()=>{ map.resize(); });
 
-$("#fondoChips").innerHTML = Object.keys(FONDOS).map(k=>
-  `<button class="chip" data-f="${k}" aria-pressed="${k==="claro"}">${FONDOS[k].n}</button>`).join("");
+$("#fondoLista").innerHTML = Object.keys(FONDOS).map(k=>
+  `<button class="fondoOpt" data-f="${k}" aria-pressed="${k==="claro"}">${FONDOS[k].n}</button>`).join("");
 $("#atrib").textContent = "Fondo: "+FONDOS.claro.a;
-$("#fondoChips").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{
+$("#fondoLista").querySelectorAll(".fondoOpt").forEach(b=>b.onclick=()=>{
   const k=b.dataset.f, f=FONDOS[k];
   map.getSource("base").setTiles(f.t);
   $("#atrib").textContent="Fondo: "+f.a;
-  $("#fondoChips").querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.f===k)));
+  $("#fondoLista").querySelectorAll(".fondoOpt").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.f===k)));
   const oscuro = k==="satelital";
   map.setPaintProperty("muni-linea","line-color", oscuro?"#ffd34d":"#5b2d6b");
   map.setPaintProperty("cp-punto","circle-stroke-color", oscuro?"#1a1208":"#2b1636");
@@ -593,6 +646,60 @@ $("#swCP").onchange = e => {
   map.setLayoutProperty("cp-punto","visibility", e.target.checked?"visible":"none");
   etiquetas();
 };
+$("#swCalor").onchange = e =>
+  map.setLayoutProperty("calor","visibility", e.target.checked?"visible":"none");
+$("#swLim").onchange = e => {
+  const v = e.target.checked?"visible":"none";
+  map.setLayoutProperty("muni-linea","visibility",v);
+  map.setLayoutProperty("muni-sel","visibility",v);
+};
+
+/* menú de capas */
+const capasBtn=$("#capasBtn"), capasMenu=$("#capasMenu");
+capasBtn.onclick = e => {
+  e.stopPropagation();
+  const abierto = capasMenu.hidden;
+  capasMenu.hidden = !abierto;
+  capasBtn.setAttribute("aria-expanded", String(abierto));
+};
+document.addEventListener("click", e => {
+  if(!capasMenu.hidden && !capasMenu.contains(e.target) && e.target!==capasBtn){
+    capasMenu.hidden=true; capasBtn.setAttribute("aria-expanded","false");
+  }
+});
+document.addEventListener("keydown", e => {
+  if(e.key==="Escape" && !capasMenu.hidden){
+    capasMenu.hidden=true; capasBtn.setAttribute("aria-expanded","false");
+  }
+});
+
+/* limpiar selección */
+$("#btnLimpiar").onclick = () => {
+  S.sel=null;
+  map.setFilter("muni-sel",["==","code",""]);
+  $("#btnLimpiar").hidden=true;
+  $("#buscar").value=""; S.filtro=""; pintarTabla(visibles());
+  encuadrar();
+};
+
+/* secciones plegables */
+document.querySelectorAll(".sec[data-plegable]").forEach(sec=>{
+  const h2=sec.querySelector("h2");
+  const cuerpo=document.createElement("div"); cuerpo.className="cuerpo";
+  while(h2.nextSibling) cuerpo.appendChild(h2.nextSibling);
+  sec.appendChild(cuerpo);
+  h2.insertAdjacentHTML("beforeend",'<span class="caret">&#8250;</span>');
+  h2.setAttribute("role","button"); h2.tabIndex=0;
+  const cerrado = sec.hasAttribute("data-cerrado");
+  sec.classList.toggle("cerrado", cerrado);
+  h2.setAttribute("aria-expanded", String(!cerrado));
+  const alternar = () => {
+    sec.classList.toggle("cerrado");
+    h2.setAttribute("aria-expanded", String(!sec.classList.contains("cerrado")));
+  };
+  h2.onclick = alternar;
+  h2.onkeydown = e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); alternar(); } };
+});
 
 $("#buscar").oninput = e => { S.filtro=e.target.value; pintarTabla(visibles()); };
 document.querySelectorAll("th[data-k]").forEach(th=>th.onclick=()=>{

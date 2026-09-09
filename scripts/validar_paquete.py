@@ -115,6 +115,14 @@ else:
     else:
         ok.append("las %d filas del CSV cruzan por DIVIPOLA con la cartografía" % len(filas))
 
+    aros_ok = {"NORTE", "CENTRO", "SUR"}
+    raras = sorted(set(r.get("aro", "").strip().upper() for r in filas) - aros_ok - {""})
+    if raras:
+        errores.append("valores de ARO no reconocidos en el CSV (esos municipios podrían "
+                       "quedar fuera de los filtros): %s" % ", ".join(raras))
+    else:
+        ok.append("todas las filas del CSV tienen ARO válida")
+
     sin_dato = [muni[c]["name"] for c in muni
                 if c not in set(r["codigo_divipola"].strip() for r in filas)]
     if sin_dato:

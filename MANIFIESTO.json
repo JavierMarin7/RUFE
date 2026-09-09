@@ -1,6 +1,6 @@
 {
   "proyecto": "Tablero de afectación por sismo · Registros RUFE · Valle del Cauca",
-  "version": "V0.2.1",
+  "version": "V0.4",
   "fecha_paquete": "2026-09-09",
   "corte_datos": "Acta No. 009 PMU Departamental · sismo del 10/08/2026",
   "decisiones_aprobadas": [
@@ -53,6 +53,18 @@
     {
       "version": "V0.2.1",
       "detalle": "El BAT ya no depende de que 'python' esté en el PATH: prueba el lanzador py, el PATH, el entorno conda activo y las rutas de Anaconda, y si no hay ninguno levanta un servidor en PowerShell. Se agrega ABRIR_SIN_SERVIDOR.html como salida sin servidor."
+    },
+    {
+      "version": "V0.2.2",
+      "detalle": "La escala de color queda fija por defecto, para que apagar Cali y Buenaventura no reviente la paleta. El interruptor informa el estado en que quedó. El panel se ensancha en pantallas grandes."
+    },
+    {
+      "version": "V0.3",
+      "detalle": "El panel pasa al costado izquierdo y el mapa ocupa el derecho. La leyenda se mueve a la derecha y los controles de zoom arriba a la derecha. En móvil el mapa sigue arriba."
+    },
+    {
+      "version": "V0.4",
+      "detalle": "Corrige Calima – El Darién, que tenía ARO 'SIN_ASIGNAR' en el CSV y quedaba filtrada fuera del mapa y de los totales (faltaban 1.418 registros). El tablero ahora ignora valores de ARO desconocidos en vez de excluir el municipio, y el validador los reporta. Selector de fondo y capas pasa a un botón sobre el mapa, con interruptores de calor, centros poblados y límites. Nuevo botón para limpiar la selección. Secciones plegables: detalle por municipio y nota metodológica arrancan cerradas. KPI rediseñados y municipios mostrados como 'X de 42'. Los interruptores responden al hacer clic en su texto."
     }
   ]
 }
