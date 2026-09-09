@@ -1,0 +1,58 @@
+{
+  "proyecto": "Tablero de afectación por sismo · Registros RUFE · Valle del Cauca",
+  "version": "V0.2.1",
+  "fecha_paquete": "2026-09-09",
+  "corte_datos": "Acta No. 009 PMU Departamental · sismo del 10/08/2026",
+  "decisiones_aprobadas": [
+    "Representación: mapa de calor tipo KDE sobre centros poblados",
+    "Reparto del conteo municipal: 80% cabecera / 20% resto de centros poblados",
+    "Actualización de datos: reemplazo del CSV en la carpeta data + arrastre de archivo al tablero",
+    "Cali y Buenaventura: interruptor para incluirlos o excluirlos",
+    "Escala de color: el usuario elige entre fija (42 municipios) y recalculada sobre lo visible"
+  ],
+  "archivos": {
+    "index.html": "Tablero completo (mapa, panel, carga y exportación)",
+    "data/municipios_valle.geojson": "42 municipios, DIVIPOLA + nombre + ARO + área, simplificado a 0.0005°",
+    "data/centros_poblados.json": "223 centros poblados con coordenadas y marca de cabecera (cm)",
+    "data/datos_rufe.csv": "Datos editables: codigo_divipola, municipio, aro, registros_rufe",
+    "data/config.json": "Título, fecha de corte, fuente, nota metodológica y factor de reparto",
+    "INICIAR_TABLERO.bat": "Detecta Python (py, PATH, conda, Anaconda) y si no hay usa PowerShell; sirve en el puerto 8000",
+    "VALIDAR.bat": "Ejecuta la validación de integridad del paquete",
+    "scripts/validar_paquete.py": "Verifica archivos, geometrías, cruce por DIVIPOLA y totales",
+    "ABRIR_SIN_SERVIDOR.html": "Tablero autónomo con los datos incrustados, se abre con doble clic sin servidor",
+    "scripts/servidor.ps1": "Servidor local en PowerShell, respaldo cuando no hay Python"
+  },
+  "fuentes_originales": [
+    "Consolidado_RUFE_Valle_Del_Cauca.xlsx (hoja 'Registros RUFE')",
+    "Municipios_Val_FeaturesToJSO1.json (Esri JSON, MGN DIVIPOLA 2022)",
+    "Centros_Poblad_FeatureToPoin_TableToExcel.xlsx (centroides de centros poblados)"
+  ],
+  "dependencias_en_linea": [
+    "MapLibre GL JS (cdnjs 5.12.0, con respaldo a unpkg y jsDelivr)",
+    "SheetJS 0.18.5 (cdnjs)",
+    "Tipografía IBM Plex Sans (Google Fonts)",
+    "Fondos cartográficos Esri (Light Gray, Topo, Imagery) y OpenStreetMap, sin API key"
+  ],
+  "advertencias": [
+    "La asignación de ARO (Norte/Centro/Sur) es una propuesta geográfica y debe validarse contra la distribución oficial de UESVALLE antes de presentar el tablero.",
+    "El mapa de calor es una representación estimada: el RUFE no reporta ubicación intramunicipal."
+  ],
+  "cambios": [
+    {
+      "version": "V0.1",
+      "detalle": "Primera entrega: preparación de datos, mapa de calor, panel de indicadores, carga por CSV y arrastre, exportación CSV y PNG."
+    },
+    {
+      "version": "V0.1.1",
+      "detalle": "La librería del mapa se carga desde cdnjs con respaldo automático a unpkg y jsDelivr; mensaje explícito si ninguna responde."
+    },
+    {
+      "version": "V0.2",
+      "detalle": "CARTO pasó a exigir API key: se reemplaza por cuatro fondos sin llave (Esri claro, relieve, satelital y OSM) con selector. Se agrega la capa de centros poblados con etiquetas de cabecera al acercar. Calor más legible: rampa con verdes y amarillos en el rango medio, peso con transformación de potencia 0.55, mayor intensidad y radio. Encuadre calculado desde la propia cartografía."
+    },
+    {
+      "version": "V0.2.1",
+      "detalle": "El BAT ya no depende de que 'python' esté en el PATH: prueba el lanzador py, el PATH, el entorno conda activo y las rutas de Anaconda, y si no hay ninguno levanta un servidor en PowerShell. Se agrega ABRIR_SIN_SERVIDOR.html como salida sin servidor."
+    }
+  ]
+}

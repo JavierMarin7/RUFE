@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Afectación por sismo · Registros RUFE · Valle del Cauca</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0f1f2b; --ink2:#17303f; --ink3:#1f3d50;
+  --paper:#eef2f4; --muted:#93a9b8; --line:rgba(255,255,255,.10);
+  --hot:#c9302c; --warm:#f2913d; --cool:#4a90d9;
+  --panel-w:400px;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--ink); color:var(--paper);
+  font-size:14px; line-height:1.45; overflow:hidden;
+  font-variant-numeric:tabular-nums;
+}
+#app{display:grid;grid-template-columns:1fr var(--panel-w);height:100vh}
+/* ---------- mapa ---------- */
+#mapwrap{position:relative;background:#0b1720}
+#map{position:absolute;inset:0}
+.maplibregl-ctrl-attrib{font-size:10px}
+#banner{
+  position:absolute;top:0;left:0;right:0;z-index:5;
+  padding:14px 18px 26px;
+  background:linear-gradient(to bottom,rgba(15,31,43,.92),rgba(15,31,43,0));
+  pointer-events:none;
+}
+#banner h1{margin:0;font-size:17px;font-weight:600;letter-spacing:-.01em}
+#banner p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+#legend{
+  position:absolute;left:18px;bottom:30px;z-index:5;
+  background:rgba(15,31,43,.88);border:1px solid var(--line);border-radius:6px;
+  padding:10px 12px;backdrop-filter:blur(6px);width:210px;
+}
+#legend .bar{height:9px;border-radius:2px;margin:6px 0 4px;
+  background:linear-gradient(to right,#3a6ea8,#4a90d9,#62d3d6,#f7e463,#f2913d,#c9302c)}
+#legend .ends{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+#legend .ttl{font-size:11px;color:var(--muted)}
+#legend .mode{margin-top:8px;font-size:11px;color:var(--muted);border-top:1px solid var(--line);padding-top:7px}
+#hover{
+  position:absolute;z-index:6;pointer-events:none;display:none;
+  background:rgba(15,31,43,.95);border:1px solid var(--line);border-radius:5px;
+  padding:7px 10px;font-size:12px;white-space:nowrap;transform:translate(-50%,-140%)
+}
+#hover b{display:block;font-weight:600;font-size:13px}
+.cplabel{font:500 11px "IBM Plex Sans",sans-serif;color:#16242e;
+  background:rgba(255,255,255,.88);border:1px solid rgba(0,0,0,.18);border-radius:3px;
+  padding:1px 5px;white-space:nowrap;pointer-events:none}
+#hover span{color:var(--muted)}
+#dropzone{
+  position:absolute;inset:0;z-index:20;display:none;
+  align-items:center;justify-content:center;
+  background:rgba(15,31,43,.93);border:2px dashed var(--cool);
+  font-size:16px;color:var(--paper)
+}
+#dropzone.on{display:flex}
+/* ---------- panel ---------- */
+#panel{
+  background:var(--ink);border-left:1px solid var(--line);
+  overflow-y:auto;overflow-x:hidden;
+}
+#panel::-webkit-scrollbar{width:9px}
+#panel::-webkit-scrollbar-thumb{background:var(--ink3);border-radius:9px}
+.sec{padding:16px 18px;border-bottom:1px solid var(--line)}
+.sec h2{margin:0 0 10px;font-size:12px;font-weight:500;color:var(--muted)}
+/* kpi */
+.kpi-lead{display:flex;align-items:baseline;gap:9px}
+.kpi-lead .n{font-size:40px;font-weight:300;letter-spacing:-.03em;line-height:1}
+.kpi-lead .u{font-size:12px;color:var(--muted)}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;margin-top:14px;background:var(--line)}
+.kpi{background:var(--ink);padding:9px 0 3px}
+.kpi .v{font-size:18px;font-weight:500}
+.kpi .l{font-size:11px;color:var(--muted)}
+/* controles */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{
+  border:1px solid var(--line);background:transparent;color:var(--muted);
+  border-radius:20px;padding:4px 12px;font:inherit;font-size:12px;cursor:pointer;
+}
+.chip:hover{border-color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+.chip:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--cool);outline-offset:2px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:11px}
+.row label{font-size:12.5px}
+.row .hint{font-size:11px;color:var(--muted);margin-top:2px}
+.switch{position:relative;width:38px;height:21px;flex:0 0 auto}
+.switch input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
+.switch span{position:absolute;inset:0;background:var(--ink3);border-radius:21px;transition:background .15s}
+.switch span::after{content:"";position:absolute;left:3px;top:3px;width:15px;height:15px;border-radius:50%;background:var(--muted);transition:transform .15s,background .15s}
+.switch input:checked + span{background:#2d5e7a}
+.switch input:checked + span::after{transform:translateX(17px);background:var(--paper)}
+input[type=range]{width:130px;accent-color:var(--cool)}
+/* ranking */
+.rank{display:flex;flex-direction:column;gap:6px}
+.rk{cursor:pointer;border:0;background:none;color:inherit;font:inherit;padding:0;text-align:left;width:100%}
+.rk .t{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px}
+.rk .t em{font-style:normal;color:var(--muted)}
+.rk .track{height:5px;background:var(--ink2);border-radius:3px;overflow:hidden}
+.rk .fill{height:100%;border-radius:3px}
+.rk:hover .t{color:#fff}
+/* tabla */
+#buscar{
+  width:100%;background:var(--ink2);border:1px solid var(--line);border-radius:5px;
+  color:var(--paper);padding:7px 10px;font:inherit;font-size:12.5px;margin-bottom:9px
+}
+#buscar::placeholder{color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{
+  text-align:left;font-weight:500;color:var(--muted);font-size:11px;
+  padding:5px 0;border-bottom:1px solid var(--line);cursor:pointer;user-select:none
+}
+th.n,td.n{text-align:right}
+td{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--ink2)}
+/* acciones + nota */
+.btn{
+  border:1px solid var(--line);background:var(--ink2);color:var(--paper);
+  border-radius:5px;padding:8px 12px;font:inherit;font-size:12.5px;cursor:pointer
+}
+.btn:hover{background:var(--ink3)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.nota{font-size:11.5px;color:var(--muted);line-height:1.55}
+.nota strong{color:#c3d2dc;font-weight:500}
+#corte{font-size:12px}
+#estado{font-size:11.5px;color:var(--muted);margin-top:9px;min-height:16px}
+#estado.err{color:#ffab9c}
+@media (max-width:900px){
+  body{overflow:auto}
+  #app{grid-template-columns:1fr;height:auto}
+  #mapwrap{height:62vh;min-height:340px}
+  #panel{overflow:visible;border-left:0;border-top:1px solid var(--line)}
+  :root{--panel-w:100%}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="mapwrap">
+    <div id="map"></div>
+    <div id="banner">
+      <h1>Afectación por sismo · Registros RUFE</h1>
+      <p id="sub">Valle del Cauca</p>
+    </div>
+    <div id="legend">
+      <div class="ttl">Densidad de registros RUFE</div>
+      <div class="bar"></div>
+      <div class="ends"><span>menor</span><span id="legmax">mayor</span></div>
+      <div class="mode" id="legmode"></div>
+      <div class="mode" id="atrib" style="border-top:0;padding-top:4px"></div>
+    </div>
+    <div id="hover"></div>
+    <div id="dropzone">Suelta el archivo para cargar los datos</div>
+  </div>
+
+  <div id="panel">
+    <div class="sec">
+      <h2>Total en la selección</h2>
+      <div class="kpi-lead"><span class="n" id="kTotal">—</span><span class="u">registros RUFE</span></div>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="v" id="kMun">—</div><div class="l">municipios</div></div>
+        <div class="kpi"><div class="v" id="kProm">—</div><div class="l">promedio por municipio</div></div>
+        <div class="kpi"><div class="v" id="kMax">—</div><div class="l" id="kMaxL">mayor afectación</div></div>
+        <div class="kpi"><div class="v" id="kTop5">—</div><div class="l">concentra el top 5</div></div>
+      </div>
+      <div id="corte" style="margin-top:14px;color:var(--muted)"></div>
+    </div>
+
+    <div class="sec">
+      <h2>Fondo del mapa</h2>
+      <div class="chips" id="fondoChips"></div>
+      <div class="row">
+        <div><label for="swCP">Mostrar centros poblados</label>
+          <div class="hint">223 puntos. Las cabeceras se ven más grandes y muestran su nombre al acercar.</div></div>
+        <div class="switch"><input type="checkbox" id="swCP" checked><span></span></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>Área de respuesta operativa</h2>
+      <div class="chips" id="aroChips"></div>
+      <div class="row">
+        <div><label for="swBig">Incluir Cali y Buenaventura</label>
+          <div class="hint" id="hintBig"></div></div>
+        <div class="switch"><input type="checkbox" id="swBig" checked><span></span></div>
+      </div>
+      <div class="row">
+        <div><label for="swEscala">Escala de color fija</label>
+          <div class="hint">Fija: siempre referida a los 42 municipios. Suelta: se recalcula con lo visible.</div></div>
+        <div class="switch"><input type="checkbox" id="swEscala"><span></span></div>
+      </div>
+      <div class="row">
+        <label for="rdRadio">Radio del calor</label>
+        <input type="range" id="rdRadio" min="14" max="80" value="34">
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>Ranking de municipios</h2>
+      <div class="rank" id="rank"></div>
+    </div>
+
+    <div class="sec">
+      <h2>Detalle por municipio</h2>
+      <input id="buscar" type="search" placeholder="Buscar municipio">
+      <table>
+        <thead><tr>
+          <th data-k="municipio">Municipio</th>
+          <th data-k="aro">ARO</th>
+          <th class="n" data-k="registros">RUFE</th>
+          <th class="n" data-k="dens">/100 km²</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="sec">
+      <h2>Datos</h2>
+      <div class="btns">
+        <button class="btn" id="btnCargar">Cargar archivo</button>
+        <button class="btn" id="btnCsv">Descargar CSV</button>
+        <button class="btn" id="btnPng">Descargar imagen</button>
+      </div>
+      <input type="file" id="fileIn" accept=".csv,.xlsx,.xls" hidden>
+      <div id="estado"></div>
+    </div>
+
+    <div class="sec">
+      <h2>Cómo leer este mapa</h2>
+      <p class="nota" id="nota"></p>
+      <p class="nota" id="fuente" style="margin-bottom:0"></p>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+"use strict";
+function iniciarApp(){
+const GRANDES = ["76001","76109"]; // Cali, Buenaventura
+const RAMPA = [
+  [0.00,"rgba(58,110,168,0)"],[0.06,"rgba(58,110,168,0.45)"],[0.16,"#4a90d9"],
+  [0.30,"#62d3d6"],[0.46,"#a8e05f"],[0.60,"#f7e463"],[0.78,"#f2913d"],[1.00,"#c9302c"]
+];
+const FONDOS = {
+  claro:{n:"Claro",t:["https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"],a:"Esri · HERE · Garmin · © OpenStreetMap"},
+  topo:{n:"Relieve",t:["https://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"],a:"Esri · USGS · IGN"},
+  satelital:{n:"Satelital",t:["https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],a:"Esri · Maxar · Earthstar Geographics"},
+  calles:{n:"Calles",t:["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],a:"© OpenStreetMap"}
+};
+
+const S = {cfg:null, muni:null, puntos:[], datos:new Map(), aros:new Set(["NORTE","CENTRO","SUR"]),
+           incluirGrandes:true, escalaFija:false, orden:{k:"registros",asc:false}, filtro:""};
+
+const $ = s => document.querySelector(s);
+const nf = n => n.toLocaleString("es-CO");
+const norm = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().trim();
+const estado = (msg,err) => { const e=$("#estado"); e.textContent=msg||""; e.className=err?"err":""; };
+
+/* ---------------- mapa ---------------- */
+const map = new maplibregl.Map({
+  container:"map", preserveDrawingBuffer:true, attributionControl:false,
+  center:[-76.35,3.86], zoom:7.1, minZoom:5.5, maxZoom:12,
+  style:{version:8, sources:{
+    base:{type:"raster", tiles:FONDOS.claro.t, tileSize:256, maxzoom:16}},
+    layers:[{id:"fondo",type:"background",paint:{"background-color":"#dfe6e9"}},
+            {id:"base",type:"raster",source:"base"}]}
+});
+map.addControl(new maplibregl.NavigationControl({showCompass:false}),"bottom-right");
+map.addControl(new maplibregl.ScaleControl({maxWidth:110,unit:"metric"}),"bottom-left");
+
+/* ---------------- carga inicial ---------------- */
+Promise.all([
+  fetch("data/config.json").then(r=>r.json()),
+  fetch("data/municipios_valle.geojson").then(r=>r.json()),
+  fetch("data/centros_poblados.json").then(r=>r.json()),
+  fetch("data/datos_rufe.csv").then(r=>r.text())
+]).then(([cfg,muni,pts,csv])=>{
+  S.cfg=cfg; S.muni=muni; S.puntos=pts;
+  document.title = cfg.titulo+" · "+cfg.subtitulo;
+  $("#banner h1").textContent=cfg.titulo;
+  $("#sub").textContent=cfg.subtitulo;
+  $("#corte").textContent="Corte: "+cfg.corte;
+  $("#nota").innerHTML="<strong>Este mapa es una representación, no una medición.</strong> "+cfg.nota_metodologica;
+  $("#fuente").textContent="Fuente: "+cfg.fuente;
+  leerCSV(csv);
+  if(map.loaded()) montar(); else map.on("load",montar);
+}).catch(e=>{
+  estado("No se pudieron leer los archivos de la carpeta data. Abre el tablero con el archivo INICIAR_TABLERO.bat, no con doble clic en index.html.",true);
+  console.error(e);
+});
+
+function montar(){
+  map.addSource("muni",{type:"geojson",data:S.muni,promoteId:"code"});
+  map.addSource("calor",{type:"geojson",data:{type:"FeatureCollection",features:[]}});
+  map.addLayer({id:"muni-relleno",type:"fill",source:"muni",
+    paint:{"fill-color":"#ffffff","fill-opacity":["case",["boolean",["feature-state","hover"],false],0.16,0]}});
+  map.addLayer({id:"calor",type:"heatmap",source:"calor",
+    paint:{
+      "heatmap-weight":["get","peso"],
+      "heatmap-intensity":["interpolate",["linear"],["zoom"],6,1.7,11,3.4],
+      "heatmap-radius":["interpolate",["linear"],["zoom"],6,26,11,150],
+      "heatmap-opacity":0.88,
+      "heatmap-color":["interpolate",["linear"],["heatmap-density"],
+        ...RAMPA.flatMap(([p,c])=>[p,c])]
+    }});
+  map.addLayer({id:"muni-linea",type:"line",source:"muni",
+    paint:{"line-color":"#5b2d6b","line-width":["case",["boolean",["feature-state","hover"],false],2.2,0.9],"line-opacity":0.85}});
+  map.addSource("cp",{type:"geojson",data:{type:"FeatureCollection",features:
+    S.puntos.map(p=>({type:"Feature",properties:{nombre:p.nombre,mpio:p.mpio,cm:p.cm},
+      geometry:{type:"Point",coordinates:[p.lon,p.lat]}}))}});
+  map.addLayer({id:"cp-punto",type:"circle",source:"cp",
+    paint:{
+      "circle-radius":["interpolate",["linear"],["zoom"],
+        6,["case",["==",["get","cm"],1],3.1,1.5],
+        11,["case",["==",["get","cm"],1],7,3.8]],
+      "circle-color":["case",["==",["get","cm"],1],"#ffffff","#e2ebf1"],
+      "circle-stroke-color":"#2b1636",
+      "circle-stroke-width":["case",["==",["get","cm"],1],1.5,0.8],
+      "circle-opacity":0.96}});
+  map.addLayer({id:"muni-sel",type:"line",source:"muni",filter:["==","code",""],
+    paint:{"line-color":"#0f1f2b","line-width":2.6}});
+  interaccionMapa();
+  refrescar();
+  encuadrar();
+  map.once("idle",encuadrar);
+}
+
+/* ---------------- datos ---------------- */
+function leerCSV(txt){
+  const lineas = txt.replace(/^\uFEFF/,"").trim().split(/\r?\n/);
+  const sep = (lineas[0].match(/;/g)||[]).length > (lineas[0].match(/,/g)||[]).length ? ";" : ",";
+  const cab = lineas[0].split(sep).map(c=>norm(c.replace(/"/g,"")));
+  const idx = {code:cab.findIndex(c=>/DIVIPOLA|CODIGO/.test(c)),
+               nom:cab.findIndex(c=>/MUNICIPIO/.test(c)),
+               aro:cab.findIndex(c=>/ARO/.test(c)),
+               val:cab.findIndex(c=>/RUFE|REGISTRO|FAMILIA|CANTIDAD/.test(c))};
+  const filas = lineas.slice(1).map(l=>l.split(sep).map(c=>c.replace(/^"|"$/g,"").trim()));
+  return cargarFilas(filas.map(f=>({
+    code: idx.code>-1?f[idx.code]:"", nom: idx.nom>-1?f[idx.nom]:"",
+    aro: idx.aro>-1?f[idx.aro]:"", val: f[idx.val]
+  })));
+}
+
+function cargarFilas(filas){
+  const porNombre = new Map(S.muni.features.map(f=>[norm(f.properties.name).replace(/\s+/g," "),f.properties.code]));
+  const alias = {"CALIMA EL DARIEN":"CALIMA","GUADALAJARA DE BUGA":"BUGA","BUGA":"GUADALAJARA DE BUGA"};
+  const nuevo = new Map(); const huerfanos=[];
+  for(const r of filas){
+    const v = Number(String(r.val).replace(/[^\d.-]/g,""));
+    if(!isFinite(v)) continue;
+    let code = String(r.code||"").replace(/\D/g,"").padStart(5,"0");
+    if(!S.muni.features.some(f=>f.properties.code===code)){
+      let n = norm(r.nom).replace(/[-–]/g," ").replace(/\s+/g," ");
+      code = porNombre.get(n) || porNombre.get(alias[n]||"") || null;
+    }
+    if(!code){ if(r.nom) huerfanos.push(r.nom); continue; }
+    nuevo.set(code,{registros:v, aro:(r.aro||"").toUpperCase()||null});
+  }
+  if(!nuevo.size){ estado("El archivo no tiene municipios reconocibles. Debe traer una columna de municipio (o código DIVIPOLA) y una de registros.",true); return false; }
+  S.datos = nuevo;
+  for(const f of S.muni.features){
+    const d = S.datos.get(f.properties.code);
+    if(d && d.aro) f.properties.aro = d.aro;
+  }
+  const faltan = S.muni.features.filter(f=>!S.datos.has(f.properties.code)).length;
+  let msg = nuevo.size+" municipios cargados.";
+  if(faltan) msg += " "+faltan+" sin dato, se dibujan en gris.";
+  if(huerfanos.length) msg += " Sin coincidencia: "+huerfanos.slice(0,4).join(", ")+(huerfanos.length>4?"…":"")+".";
+  estado(msg, huerfanos.length>0);
+  return true;
+}
+
+/* ---------------- cálculo ---------------- */
+function visibles(){
+  return S.muni.features.filter(f=>{
+    const p=f.properties;
+    if(!S.datos.has(p.code)) return false;
+    if(!S.aros.has(p.aro)) return false;
+    if(!S.incluirGrandes && GRANDES.includes(p.code)) return false;
+    return true;
+  }).map(f=>({code:f.properties.code, municipio:f.properties.name, aro:f.properties.aro,
+              area:f.properties.area_km2, registros:S.datos.get(f.properties.code).registros,
+              dens:S.datos.get(f.properties.code).registros/f.properties.area_km2*100}));
+}
+
+function puntosPonderados(lista, maxRef){
+  const set = new Set(lista.map(m=>m.code));
+  const porMuni = new Map();
+  for(const p of S.puntos){ if(!set.has(p.code)) continue;
+    if(!porMuni.has(p.code)) porMuni.set(p.code,[]); porMuni.get(p.code).push(p); }
+  const w = S.cfg.reparto_cabecera ?? 0.8;
+  const feats = [];
+  for(const m of lista){
+    const pts = porMuni.get(m.code)||[];
+    if(!pts.length) continue;
+    const resto = pts.filter(p=>!p.cm), cab = pts.filter(p=>p.cm);
+    for(const p of pts){
+      let share;
+      if(!resto.length) share = 1/pts.length;
+      else if(p.cm) share = w/Math.max(cab.length,1);
+      else share = (1-w)/resto.length;
+      feats.push({type:"Feature",
+        properties:{peso: Math.pow(Math.min(1,(m.registros*share)/maxRef), 0.55)},
+        geometry:{type:"Point",coordinates:[p.lon,p.lat]}});
+    }
+  }
+  return {type:"FeatureCollection",features:feats};
+}
+
+function refrescar(){
+  const lista = visibles();
+  const w = S.cfg.reparto_cabecera ?? 0.8;
+  // referencia: mayor peso puntual posible, según modo de escala
+  const base = S.escalaFija
+    ? S.muni.features.filter(f=>S.datos.has(f.properties.code))
+        .map(f=>({code:f.properties.code, registros:S.datos.get(f.properties.code).registros}))
+    : lista;
+  const maxRef = Math.max(1, ...base.map(m=>{
+    const pts = S.puntos.filter(p=>p.code===m.code);
+    const solos = pts.filter(p=>!p.cm).length===0;
+    return m.registros * (solos ? 1/Math.max(pts.length,1) : w);
+  }));
+
+  if(map.getSource("calor")) map.getSource("calor").setData(puntosPonderados(lista,maxRef));
+  if(map.getLayer("muni-linea")){
+    const cods = lista.map(m=>m.code);
+    map.setPaintProperty("muni-linea","line-opacity",
+      ["case",["in",["get","code"],["literal",cods]],0.85,0.25]);
+  }
+  pintarKPIs(lista); pintarRanking(lista); pintarTabla(lista);
+  const top = [...lista].sort((a,b)=>b.registros-a.registros)[0];
+  $("#legmax").textContent = top ? nf(top.registros)+" ("+top.municipio+")" : "mayor";
+  $("#legmode").textContent = S.escalaFija
+    ? "Escala fija: comparable entre vistas."
+    : "Escala recalculada sobre lo visible ahora.";
+  const g = S.muni.features.filter(f=>GRANDES.includes(f.properties.code) && S.datos.has(f.properties.code))
+    .reduce((a,f)=>a+S.datos.get(f.properties.code).registros,0);
+  const tot = S.muni.features.filter(f=>S.datos.has(f.properties.code))
+    .reduce((a,f)=>a+S.datos.get(f.properties.code).registros,0);
+  $("#hintBig").textContent = tot ? "Concentran el "+(g/tot*100).toFixed(1)+"% del total departamental." : "";
+}
+
+/* ---------------- panel ---------------- */
+function pintarKPIs(l){
+  const tot = l.reduce((a,m)=>a+m.registros,0);
+  const ord = [...l].sort((a,b)=>b.registros-a.registros);
+  $("#kTotal").textContent = nf(tot);
+  $("#kMun").textContent = l.length;
+  $("#kProm").textContent = l.length? nf(Math.round(tot/l.length)) : "—";
+  $("#kMax").textContent = ord[0]? nf(ord[0].registros) : "—";
+  $("#kMaxL").textContent = ord[0]? ord[0].municipio : "mayor afectación";
+  $("#kTop5").textContent = tot? (ord.slice(0,5).reduce((a,m)=>a+m.registros,0)/tot*100).toFixed(0)+"%" : "—";
+}
+
+function colorDe(t){ // t 0..1 sobre la rampa
+  let a=RAMPA[0], b=RAMPA[RAMPA.length-1];
+  for(let i=0;i<RAMPA.length-1;i++) if(t>=RAMPA[i][0] && t<=RAMPA[i+1][0]){a=RAMPA[i];b=RAMPA[i+1];break;}
+  return t<0.2? "#4a90d9" : b[1];
+}
+
+function pintarRanking(l){
+  const ord=[...l].sort((a,b)=>b.registros-a.registros).slice(0,12);
+  const mx=ord[0]?ord[0].registros:1;
+  $("#rank").innerHTML = ord.map(m=>`
+    <button class="rk" data-code="${m.code}">
+      <div class="t"><span>${m.municipio}</span><em>${nf(m.registros)}</em></div>
+      <div class="track"><div class="fill" style="width:${(m.registros/mx*100).toFixed(1)}%;background:${colorDe(m.registros/mx)}"></div></div>
+    </button>`).join("") || `<p class="nota">No hay municipios en esta selección.</p>`;
+  $("#rank").querySelectorAll(".rk").forEach(b=>b.onclick=()=>volarA(b.dataset.code));
+}
+
+function pintarTabla(l){
+  const f=S.filtro?norm(S.filtro):"";
+  const rows=l.filter(m=>!f||norm(m.municipio).includes(f))
+    .sort((a,b)=>{const k=S.orden.k, s=S.orden.asc?1:-1;
+      return typeof a[k]==="string"? s*a[k].localeCompare(b[k],"es") : s*(a[k]-b[k]);});
+  $("#tbody").innerHTML = rows.map(m=>`<tr data-code="${m.code}">
+    <td>${m.municipio}</td><td style="color:var(--muted)">${m.aro[0]+m.aro.slice(1).toLowerCase()}</td>
+    <td class="n">${nf(m.registros)}</td><td class="n">${m.dens.toFixed(1)}</td></tr>`).join("")
+    || `<tr><td colspan="4" style="color:var(--muted);padding:10px 0">Sin resultados.</td></tr>`;
+  $("#tbody").querySelectorAll("tr[data-code]").forEach(tr=>tr.onclick=()=>volarA(tr.dataset.code));
+}
+
+function volarA(code){
+  const f=S.muni.features.find(x=>x.properties.code===code); if(!f) return;
+  let mnx=180,mny=90,mxx=-180,mxy=-90;
+  const walk=c=>{ if(typeof c[0]==="number"){mnx=Math.min(mnx,c[0]);mxx=Math.max(mxx,c[0]);mny=Math.min(mny,c[1]);mxy=Math.max(mxy,c[1]);} else c.forEach(walk); };
+  walk(f.geometry.coordinates);
+  map.setFilter("muni-sel",["==","code",code]);
+  map.fitBounds([[mnx,mny],[mxx,mxy]],{padding:90,maxZoom:10.5});
+}
+
+/* ---------------- interacción ---------------- */
+function interaccionMapa(){
+  let hov=null;
+  map.on("mousemove","muni-relleno",e=>{
+    const f=e.features[0]; const code=f.properties.code;
+    if(hov!==code){ if(hov) map.setFeatureState({source:"muni",id:hov},{hover:false});
+      hov=code; map.setFeatureState({source:"muni",id:code},{hover:true}); }
+    const d=S.datos.get(code); const h=$("#hover");
+    h.style.display="block"; h.style.left=e.point.x+"px"; h.style.top=e.point.y+"px";
+    h.innerHTML = `<b>${f.properties.name}</b><span>${d? nf(d.registros)+" registros RUFE" : "sin dato cargado"}</span>`;
+    map.getCanvas().style.cursor="pointer";
+  });
+  map.on("mouseleave","muni-relleno",()=>{
+    if(hov) map.setFeatureState({source:"muni",id:hov},{hover:false});
+    hov=null; $("#hover").style.display="none"; map.getCanvas().style.cursor="";
+  });
+  map.on("click","muni-relleno",e=>volarA(e.features[0].properties.code));
+  map.on("mousemove","cp-punto",e=>{
+    const f=e.features[0], h=$("#hover");
+    h.style.display="block"; h.style.left=e.point.x+"px"; h.style.top=e.point.y+"px";
+    h.innerHTML=`<b>${f.properties.nombre}</b><span>${f.properties.cm?"Cabecera · ":""}${f.properties.mpio}</span>`;
+  });
+}
+
+function chipsARO(){
+  const defs=[["NORTE","Norte"],["CENTRO","Centro"],["SUR","Sur"]];
+  $("#aroChips").innerHTML = defs.map(([k,t])=>
+    `<button class="chip" data-aro="${k}" aria-pressed="true">${t}</button>`).join("")+
+    `<button class="chip" data-aro="TODAS" aria-pressed="false">Todas</button>`;
+  $("#aroChips").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{
+    const k=b.dataset.aro;
+    if(k==="TODAS") S.aros=new Set(["NORTE","CENTRO","SUR"]);
+    else { S.aros.has(k)?S.aros.delete(k):S.aros.add(k); if(!S.aros.size) S.aros=new Set([k]); }
+    $("#aroChips").querySelectorAll("[data-aro]").forEach(x=>{
+      x.setAttribute("aria-pressed", x.dataset.aro==="TODAS" ? String(S.aros.size===3) : String(S.aros.has(x.dataset.aro)));
+    });
+    refrescar();
+  });
+}
+chipsARO();
+
+$("#swBig").onchange = e => { S.incluirGrandes=e.target.checked; refrescar(); };
+$("#swEscala").onchange = e => { S.escalaFija=e.target.checked; refrescar(); };
+$("#rdRadio").oninput = e => {
+  const r=+e.target.value;
+  map.setPaintProperty("calor","heatmap-radius",
+    ["interpolate",["linear"],["zoom"],6,r*0.78,11,r*4.4]);
+};
+/* ---------------- fondo y centros poblados ---------------- */
+function encuadrar(){
+  let mnx=180,mny=90,mxx=-180,mxy=-90;
+  const w=c=>{ if(typeof c[0]==="number"){
+      mnx=Math.min(mnx,c[0]);mxx=Math.max(mxx,c[0]);mny=Math.min(mny,c[1]);mxy=Math.max(mxy,c[1]);
+    } else c.forEach(w); };
+  S.muni.features.forEach(f=>w(f.geometry.coordinates));
+  map.resize();
+  map.fitBounds([[mnx,mny],[mxx,mxy]],{padding:{top:64,left:28,right:28,bottom:56},duration:0});
+}
+window.addEventListener("resize",()=>{ map.resize(); });
+
+$("#fondoChips").innerHTML = Object.keys(FONDOS).map(k=>
+  `<button class="chip" data-f="${k}" aria-pressed="${k==="claro"}">${FONDOS[k].n}</button>`).join("");
+$("#atrib").textContent = "Fondo: "+FONDOS.claro.a;
+$("#fondoChips").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{
+  const k=b.dataset.f, f=FONDOS[k];
+  map.getSource("base").setTiles(f.t);
+  $("#atrib").textContent="Fondo: "+f.a;
+  $("#fondoChips").querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.f===k)));
+  const oscuro = k==="satelital";
+  map.setPaintProperty("muni-linea","line-color", oscuro?"#ffd34d":"#5b2d6b");
+  map.setPaintProperty("cp-punto","circle-stroke-color", oscuro?"#1a1208":"#2b1636");
+  document.querySelectorAll(".cplabel").forEach(e=>{
+    e.style.background = oscuro?"rgba(20,16,10,.82)":"rgba(255,255,255,.88)";
+    e.style.color = oscuro?"#fdf6e6":"#16242e";
+  });
+});
+
+let marcadores=[];
+function etiquetas(){
+  const mostrar = $("#swCP").checked && map.getZoom()>=8.2;
+  if(mostrar && !marcadores.length){
+    marcadores = S.puntos.filter(p=>p.cm).map(p=>{
+      const d=document.createElement("div"); d.className="cplabel"; d.textContent=p.nombre;
+      return new maplibregl.Marker({element:d,anchor:"top",offset:[0,6]})
+        .setLngLat([p.lon,p.lat]).addTo(map);
+    });
+  } else if(!mostrar && marcadores.length){
+    marcadores.forEach(m=>m.remove()); marcadores=[];
+  }
+}
+map.on("zoomend",etiquetas);
+$("#swCP").onchange = e => {
+  map.setLayoutProperty("cp-punto","visibility", e.target.checked?"visible":"none");
+  etiquetas();
+};
+
+$("#buscar").oninput = e => { S.filtro=e.target.value; pintarTabla(visibles()); };
+document.querySelectorAll("th[data-k]").forEach(th=>th.onclick=()=>{
+  const k=th.dataset.k;
+  S.orden = S.orden.k===k? {k,asc:!S.orden.asc} : {k,asc:k==="municipio"||k==="aro"};
+  pintarTabla(visibles());
+});
+
+/* ---------------- carga de archivos ---------------- */
+$("#btnCargar").onclick = ()=> $("#fileIn").click();
+$("#fileIn").onchange = e => { if(e.target.files[0]) procesar(e.target.files[0]); e.target.value=""; };
+["dragenter","dragover"].forEach(ev=>document.addEventListener(ev,e=>{
+  e.preventDefault(); if(e.dataTransfer.types.includes("Files")) $("#dropzone").classList.add("on"); }));
+["dragleave","drop"].forEach(ev=>document.addEventListener(ev,e=>{
+  e.preventDefault(); if(ev==="drop"||e.relatedTarget===null) $("#dropzone").classList.remove("on"); }));
+document.addEventListener("drop",e=>{ const f=e.dataTransfer.files[0]; if(f) procesar(f); });
+
+function procesar(file){
+  const r=new FileReader();
+  const esExcel=/\.(xlsx|xls)$/i.test(file.name);
+  r.onerror=()=>estado("No se pudo leer "+file.name+".",true);
+  r.onload=()=>{
+    try{
+      let ok;
+      if(esExcel){
+        if(typeof XLSX==="undefined") throw new Error("La librería para leer Excel no se descargó. Guarda el archivo como CSV y cárgalo así.");
+        const wb=XLSX.read(r.result,{type:"array"});
+        ok=desdeLibro(wb,file.name);
+      } else ok=leerCSV(r.result);
+      if(ok){ refrescar(); estado($("#estado").textContent+" Origen: "+file.name); }
+    }catch(err){ estado("No se pudo interpretar "+file.name+". "+err.message,true); }
+  };
+  esExcel? r.readAsArrayBuffer(file) : r.readAsText(file,"UTF-8");
+}
+
+// busca en todas las hojas la primera fila que parezca encabezado con municipio + registros
+function desdeLibro(wb,nombre){
+  for(const hoja of wb.SheetNames){
+    const m = XLSX.utils.sheet_to_json(wb.Sheets[hoja],{header:1,blankrows:false});
+    for(let i=0;i<Math.min(m.length,12);i++){
+      const fila=(m[i]||[]).map(c=>norm(c??""));
+      const cM=fila.findIndex(c=>/^MUNICIPIO/.test(c));
+      const cV=fila.findIndex(c=>/RUFE|REGISTRO|FAMILIA|CANTIDAD/.test(c));
+      if(cM>-1 && cV>-1){
+        const cC=fila.findIndex(c=>/DIVIPOLA|CODIGO/.test(c));
+        const cA=fila.findIndex(c=>/^ARO/.test(c));
+        const filas=m.slice(i+1)
+          .filter(f=>f[cM] && !/TOTAL/.test(norm(f[cM])))
+          .map(f=>({nom:f[cM], val:f[cV], code:cC>-1?f[cC]:"", aro:cA>-1?f[cA]:""}));
+        if(filas.length) return cargarFilas(filas);
+      }
+    }
+  }
+  estado("En "+nombre+" no se encontró una hoja con columnas de municipio y de registros.",true);
+  return false;
+}
+
+/* ---------------- exportar ---------------- */
+function bajar(blob,nombre){
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=nombre;
+  a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+$("#btnCsv").onclick = ()=>{
+  const l=[...visibles()].sort((a,b)=>b.registros-a.registros);
+  const head="codigo_divipola,municipio,aro,registros_rufe,registros_por_100km2\n";
+  const body=l.map(m=>[m.code,`"${m.municipio}"`,m.aro,m.registros,m.dens.toFixed(2)].join(",")).join("\n");
+  bajar(new Blob(["\uFEFF"+head+body+"\n"],{type:"text/csv;charset=utf-8"}),"RUFE_seleccion.csv");
+  estado("CSV descargado con "+l.length+" municipios.");
+};
+$("#btnPng").onclick = ()=>{
+  map.once("idle",()=>{
+    const src=map.getCanvas(), pad=16, alto=58;
+    const c=document.createElement("canvas");
+    c.width=src.width; c.height=src.height+alto*(window.devicePixelRatio||1);
+    const g=c.getContext("2d"), k=window.devicePixelRatio||1;
+    g.fillStyle="#0f1f2b"; g.fillRect(0,0,c.width,c.height);
+    g.drawImage(src,0,alto*k);
+    g.fillStyle="#eef2f4"; g.font=`600 ${15*k}px "IBM Plex Sans",sans-serif`;
+    g.fillText(S.cfg.titulo+" · "+S.cfg.subtitulo, pad*k, 24*k);
+    g.fillStyle="#93a9b8"; g.font=`${11*k}px "IBM Plex Sans",sans-serif`;
+    g.fillText("Corte: "+S.cfg.corte+"  ·  Distribución 80/20 cabecera–rural, representación estimada", pad*k, 42*k);
+    c.toBlob(b=>{ bajar(b,"mapa_calor_RUFE.png"); estado("Imagen descargada."); });
+  });
+  map.triggerRepaint();
+};
+} // fin iniciarApp
+
+/* ---- carga de MapLibre con respaldos entre CDN ---- */
+const CDNS = [
+  ["https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/5.12.0/maplibre-gl.min.js",
+   "https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/5.12.0/maplibre-gl.min.css"],
+  ["https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js",
+   "https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"],
+  ["https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js",
+   "https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css"]
+];
+const cargarCSS = u => { const l=document.createElement("link"); l.rel="stylesheet"; l.href=u; document.head.appendChild(l); };
+const cargarJS = u => new Promise((ok,no)=>{
+  const s=document.createElement("script"); s.src=u; s.async=false;
+  s.onload=ok; s.onerror=()=>no(new Error(u)); document.head.appendChild(s);
+});
+(async ()=>{
+  for(const [js,css] of CDNS){
+    try{
+      await cargarJS(js);
+      if(window.maplibregl){ cargarCSS(css); iniciarApp(); return; }
+    }catch(e){ /* siguiente CDN */ }
+  }
+  const m=document.getElementById("map");
+  m.style.cssText="display:flex;align-items:center;justify-content:center;padding:32px;text-align:center;color:#93a9b8;font-size:13px;line-height:1.6";
+  m.innerHTML="No se pudo descargar la librería del mapa.<br>Revisa la conexión a internet y vuelve a abrir el tablero.";
+  const e=document.getElementById("estado");
+  if(e){ e.className="err"; e.textContent="Mapa no disponible: falló la descarga de MapLibre GL JS."; }
+})();
+</script>
+</body>
+</html>
